@@ -1,0 +1,30 @@
+
+{% extends 'base.html' %}
+{% from "macros.html" import confirmSelected, selectFunction, calculationValues, selectVarForPlot %}
+
+    {% block filled_forms_area %}
+    <!-- <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <label for="function"> Wybierz funkcję: </label>
+            {{ selectFunction(funkcjeDict, funkcja) }}
+        <input type="submit" value="Zapisz"><br><br>
+    </form> -->
+    
+    <legend> Values for plot: </legend>
+    <fieldset>
+        {{ selectVarForPlot(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax) }}
+
+        <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+            
+                {{calculationValues(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax)}}
+            
+        </form><br>
+    </fieldset>
+    <br>
+    
+    <div id="chart-container">
+        {{ html_fig | safe }}
+    </div>
+    <br>
+    {{ confirmSelected(funkcja, tempObliczen, cisnObliczen, zakresMin, zakresMax, varForPlot) }} 
+    <br>
+    {% endblock %}

@@ -1,0 +1,56 @@
+{% from "macros.html" import confirmSelected, selectFunction, calculationValues %}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>apstar</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="tablice">
+  <style>
+    body {background-color: rgb(171, 226, 233);}
+    h1 {color: red; font-size: 20px;}
+    p {color: blue;}
+    p1 {color:black;}
+  </style>
+</head>
+
+<body>
+    {% for message in get_flashed_messages() %}
+      <div>{{message}}</div>
+    {% endfor %}
+    <h1>form_empty; licznik: {{globalnyLicznik}}; metoda: {{formMethod}}</h1>
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <label for="function"> Wybierz funkcję: </label>
+        {{ selectFunction(funkcjeDict, funkcja) }}
+        <input type="submit" value="Zapisz"><br><br>
+    </form>
+
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+      <legend>Wartości do obliczeń: </legend>
+      <fieldset>
+          {{calculationValues(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax)}}
+      </fieldset>
+    </form><br>
+
+    <!--
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <label for="zadana_temp"> Podaj temperaturę do obiczeń </label>
+        <input type="text", id="zadana_temp", name="zadana_temp", value="{{tempObliczen}}"><br>
+        <label for="zadane_cisn"> Podaj ciśnienie (abs) do obiczeń </label>
+        <input type="text", id="zadane_cisn", name="zadane_cisn", value="{{cisnObliczen}}"><br>
+        <input type="radio", id="plotTemp", name="varForPlot", value="selectedTemp" >
+        <lable for="plotTemp"> Generuj wykres dla temperatury </label><br>
+        <input type="radio", id="plotPres", name="varForPlot", value="selectedPres" disabled>
+        <lable for="plotPres"> Generuj wykres dla ciśnienia </label><br>
+        <label for="zakres_min"> Zakres wykresu - min: </label>
+        <input type="text", id="zakres_min", name="zakres_min", value="{{zakresMin}}"><br>
+        <label for="zakres_max"> Zakres wykresu - max: </label>
+        <input type="text", id="zakres_max", name="zakres_max", value="{{zakresMax}}"><br>
+        <input type="submit" value="Oblicz" disabled><br>
+    </form>
+  -->
+
+</body>
+</html>

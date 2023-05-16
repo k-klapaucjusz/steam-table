@@ -1,0 +1,118 @@
+{% macro confirmSelected(funkcja, tempObliczen, cisnObliczen, zakresMin, zakresMax, varForPlot) %}
+    <p1> Funkjca wybarana poprawnie: {{funkcja}}</p1><br>
+    <p1> Zakres min dla wykresu: {{zakresMin}}</p1><br>
+    <p1> Zakres max dla wykresu: {{(zakresMax)}}</p1><br>
+    <p1> Zmienna dla wykresu: {{varForPlot}}</p1><br>
+{%endmacro%}
+
+{% macro selectFunction(funkcjeDict, funkcja) %}
+    <select id="function" name="function" >
+        {% for funcName in funkcjeDict %}
+            {% if funkcja == funcName %}
+                <option value="{{funcName}}" selected>{{funcName}}</option>
+            {%else: %}
+                <option value="{{funcName}}" >{{funcName}}</option>
+            {% endif %}
+        {% endfor %}  
+    </select><br>
+{% endmacro %}
+
+{% macro selectFunctionV2(funkcjeDict, funkcja) %}
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <div class="row" >  
+            <div class="col-md-12" >
+                <button type="submit" class="btn btn-primary btn-block sticky-top" >Select function</button>
+
+                <div id="radio-list">
+                    {% for funcName in funkcjeDict %}
+                        {% if funkcja == funcName %}
+                        <div class="custom-control custom-radio">
+                            <input type="radio" id="{{ funcName }}" name="function" value="{{funcName}}" class="custom-control-input" checked>
+                            <label class="custom-control-label" for="{{ funcName }}">{{ funcName }}</label>
+                        </div>
+                        {% else %}
+                        <div class="custom-control custom-radio">
+                            <input type="radio" id="{{ funcName }}" name="function" value="{{funcName}}" class="custom-control-input">
+                            <label class="custom-control-label" for="{{ funcName }}">{{ funcName }}</label>
+                        </div>
+                        {%endif%}
+                    {% endfor %}
+                </div>
+              
+            </div>
+         
+        </div>
+    </form>
+
+{% endmacro %}
+
+{% macro selectVarForPlot(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax) %}
+    {% if funkcjeDict[funkcja].argsNr == 2 %}
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        {% for arg in funkcjeDict[funkcja].args %}
+            {% if inputVar[arg].varForPlot %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="varForPlot" id="{{inputVar[arg].abbrev}}" value="{{inputVar[arg].name}}" checked>
+                    <label class="form-check-label" for="{{inputVar[arg].abbrev}}"> Generate plot for {{inputVar[arg].abbrev}}</label> 
+                </div>   
+            {% else %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="varForPlot" id="{{inputVar[arg].abbrev}}" value="{{inputVar[arg].name}}" >
+                    <label class="form-check-label" for="{{inputVar[arg].abbrev}}"> Generate plot for {{inputVar[arg].abbrev}}</label> 
+                </div> 
+            {% endif %}
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Select</button>
+    </form>
+
+    {% elif funkcjeDict[funkcja].argsNr == 1 %}
+        <p1> Plot for {{inputVar[funkcjeDict[funkcja].args[0]].abbrev}}</p1><br>
+    {% else %}
+        <p1> Function doesn't get input data </p1><br>
+    
+    {% endif %}
+{% endmacro %}
+
+
+{% macro calculationValues(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax) %}
+    <!-- {% set arguments = {"t":"temperature", "p":"pressure", "rho": "density", "h": "enthalpy", "s":"entrophy"} %} -->
+  
+    {% if varForPlot in inputVar %}
+        <div class="form-group">
+            <label for="zakres_min">Plot range for {{inputVar[varForPlot].abbrev}} - min: </label>
+            <input type="text" class="form-control"  id="zakres_min" name="zakres_min", value="{{zakresMin}}">
+        </div>
+        <div class="form-group">
+            <label for="zakres_max">Plot range for {{inputVar[varForPlot].abbrev}} - max: </label>
+            <input type="text" class="form-control"  id="zakres_max" name="zakres_max", value="{{zakresMax}}">
+        </div>
+
+        <!-- <label for="zakres_min"> Plot range for {{inputVar[varForPlot].abbrev}} - min: </label>
+        <input type="text", id="zakres_min", name="zakres_min", value="{{zakresMin}}"><br>
+        <label for="zakres_max"> Plot range for {{inputVar[varForPlot].abbrev}} - max: </label>
+        <input type="text", id="zakres_max", name="zakres_max", value="{{zakresMax}}"><br> -->
+    {% else %}
+        <p1> Variable for plot not selected </p1><br>
+    {% endif %}
+
+    {% if funkcjeDict[funkcja].argsNr == 2 and varForPlot != "" %}
+        {% for indepArg in funkcjeDict[funkcja].args %}
+            {% if indepArg != varForPlot %}  
+            <div class="form-group">
+                <label for="{{inputVar[indepArg].abbrev}}"> {{inputVar[indepArg].prompt}} </label>
+                <input type="text" class="form-control"  id="{{inputVar[indepArg].abbrev}}" name="{{inputVar[indepArg].abbrev}}" 
+                value="{{inputVar[indepArg].value}}">
+            </div> 
+                <!-- <label for="{{inputVar[indepArg].abbrev}}"> {{inputVar[indepArg].prompt}} </label>
+                <input type="text", id="{{inputVar[indepArg].abbrev}}", name="{{inputVar[indepArg].abbrev}}", 
+                    value="{{inputVar[indepArg].value}}"><br> -->
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% if varForPlot in inputVar %}
+        <button type="submit" class="btn btn-primary">Generate plot</button><br>
+    {% else %}
+        <button type="submit" class="btn btn-primary" disabled>Generate plot</button><br>
+    {% endif %}
+{% endmacro %}
+

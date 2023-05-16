@@ -1,0 +1,42 @@
+
+{% extends 'base.html'%}
+{% from "macros.html" import confirmSelected, selectFunction, calculationValues, selectFunctionV2 %}
+  {% block epmty_forms_area %}
+    <!-- <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <label for="function"> Wybierz funkcję: </label>
+        {{ selectFunction(funkcjeDict, funkcja) }}
+        <input type="submit" value="Zapisz"><br><br>
+    </form> -->
+    <div class="alert alert-warning">
+      Select thermodynamic function
+    </div>
+
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+      <legend>Values for plot: </legend>
+      <fieldset>
+          {{calculationValues(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax)}}
+      </fieldset>
+    </form><br>
+
+    <!--
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <label for="zadana_temp"> Podaj temperaturę do obiczeń </label>
+        <input type="text", id="zadana_temp", name="zadana_temp", value="{{tempObliczen}}"><br>
+        <label for="zadane_cisn"> Podaj ciśnienie (abs) do obiczeń </label>
+        <input type="text", id="zadane_cisn", name="zadane_cisn", value="{{cisnObliczen}}"><br>
+        <input type="radio", id="plotTemp", name="varForPlot", value="selectedTemp" >
+        <lable for="plotTemp"> Generuj wykres dla temperatury </label><br>
+        <input type="radio", id="plotPres", name="varForPlot", value="selectedPres" disabled>
+        <lable for="plotPres"> Generuj wykres dla ciśnienia </label><br>
+        <label for="zakres_min"> Zakres wykresu - min: </label>
+        <input type="text", id="zakres_min", name="zakres_min", value="{{zakresMin}}"><br>
+        <label for="zakres_max"> Zakres wykresu - max: </label>
+        <input type="text", id="zakres_max", name="zakres_max", value="{{zakresMax}}"><br>
+        <input type="submit" value="Oblicz" disabled><br>
+    </form>
+  -->
+  {% endblock %}
+
+  {% block leftColSelectFunction %}
+    {{ selectFunctionV2(funkcjeDict, funkcja) }}
+  {% endblock %}

@@ -1,0 +1,57 @@
+
+{% from "macros.html" import confirmSelected, selectFunction, calculationValues %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>apstar</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="tablice">
+    <style>
+        body {background-color: rgb(171, 226, 233);}
+        h1 {color: red; font-size: 20px;}
+        p {color: blue;}
+        p1 {color:black; font-style: italic;}
+    </style>
+</head>
+    
+<body>
+    {% for message in get_flashed_messages() %}
+      <div>{{message}}</div>
+    {% endfor %}
+    <h1>form_filled; licznik: {{globalnyLicznik}}; metoda: {{formMethod}}</h1>
+
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <label for="function"> Wybierz funkcję: </label>
+            {{ selectFunction(funkcjeDict, funkcja) }}
+        <input type="submit" value="Zapisz"><br><br>
+    </form>
+    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <legend>Wartości do obliczeń: </legend>
+        <fieldset>
+            {{calculationValues(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax)}}
+        </fieldset>
+    </form><br>
+    <!--    
+        <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+
+        <input type="submit", value="Wybieram"><br><br>
+    </form>
+    -->
+    <br>
+    {{ confirmSelected(funkcja, tempObliczen, cisnObliczen, zakresMin, zakresMax, varForPlot) }} 
+    <br>
+
+    <!-- <p1> Funkjca wybarana poprawnie: {{funkcja}}</p1><br>
+    <p1> Temp. do obliczeń: {{(tempObliczen)}}</p1><br>
+    <p1> Ciśnienie do obliczeń: {{(cisnObliczen)}}</p1><br>
+    <p1> Zakres min dla wykresu: {{(zakresMin)}}</p1><br>
+    <p1> Zakres max dla wykresu: {{(zakresMax)}}</p1><br>
+    <p1> Zmienna dla wykresu: {{varForPlot}}</p1><br> -->
+    <!--
+    {{html_fig}}
+    -->
+
+</body>
+</html>
