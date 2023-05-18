@@ -1,6 +1,6 @@
 # import imp
 # import re
-from flask import Flask, request, url_for, redirect, render_template, flash
+from flask import Flask, request, url_for, redirect, render_template, flash, g
 from flask_debugtoolbar import DebugToolbarExtension
 from datetime import datetime
 # from sympy import Symbol,symbols, Function,diff, Eq, dsolve, solve, lambdify
@@ -14,16 +14,29 @@ from werkzeug.debug import DebuggedApplication
 import os
 import mpld3
 from pyXSteam.XSteam import XSteam
+import sqlite3
 
 # os.sys.path.append("C:\\Users\\apsta\\PycharmProjects\\pythonProject")
 # import rownania_rozniczkowe
-
+app_info = {'db_file' : os.path.join(os.getcwd(),"sql_data")}
 
 app = Flask(__name__, template_folder="Templates")
 
 app.debug = True
 app.config['SECRET_KEY'] = '1111'
 # toolbar = DebugToolbarExtension(app)
+
+def get_db():
+    if not hasattr(g, "sqlite_db"):
+        conn = sqlite3.connect(app_info["db_file"])
+        conn.row_factory = sqlite3.Row
+        g.sqlite_db = conn
+    return g.sqlite_db
+
+@app.teardown_appcontext
+def close_db(error):
+    if hasattr(g, 'sqlite_db'):
+        g.sqlite_db.close()
 
 @app.route('/')
 def index():
@@ -452,6 +465,155 @@ funkcjeDict = xSteamIndex.index()
 
 @app.route('/tablice_parowe_jinja', methods=['GET', 'POST'])
 def tablice_parowe_jinja():
+    global funkcjeDict, globalnyLicznik, funkcja, varForPlot, tempObliczen, cisnObliczen, zakresMin, zakresMax
+    ## wybór funkcji - popup menue (POST)
+    print(f"pracuje :) {globalnyLicznik}")
+    globalnyLicznik += 1
+    licznik = f"<br><p1> naliczyłem: {globalnyLicznik}; Metoda: {request.method}</p1>"
+    input_p, input_t = 'disabled', 'disabled'
+    steam_table = XSteam(XSteam.UNIT_SYSTEM_MKS) #to jest złe miejsce na tworzenie obiektu steam_table bo za każdym razem jak się 
+    # coś na stronie odświeży to będzie wykonywane. Docelowo ta linia powinna się tylko raz uruchamiać jak startuje strona /tablice_parowe
+            # niepotrzebny fragment kodu: zrobiłem to dynamicznie :)
+            # uf_tsat_p = np.frompyfunc(steam_table.tsat_p,1,1)
+            # uf_hV_p = np.frompyfunc(steam_table.hV_p, 1, 1)
+            # uf_h_pt = np.frompyfunc(steam_table.h_pt,2,1)
+            # uf_hV_t = np.frompyfunc(steam_table.hV_t,1,1)
+            # uf_rho_pt = np.frompyfunc(steam_table.rho_pt,2,1) # jak powyżej - ten fragment też powinnien wykonywać się tylko raz
+    formMethod = request.method
+
+    if request.method == 'GET':
+        # first start of app
+        if funkcja == '' or None:
+            funkcja = 'tsat_p'
+        flash(f"Metoda: {formMethod}; plik: from_empty.html; licznik: {globalnyLicznik} ")
+        # form_empty_path = os.path.join("\Templates", "form_empty.html")
+        # print(form_empty_path)
+        return render_template("form_empty.html", globalnyLicznik=globalnyLicznik, funkcja = funkcja, tempObliczen=tempObliczen, formMethod=formMethod, cisnObliczen=cisnObliczen, zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar)
+    
+    elif request.method == 'POST':
+        flash(f"Metoda: {formMethod}; plik: from_filled.html; licznik: {globalnyLicznik} ")
+        if "function" in request.form and request.form["function"] != None:
+            if funkcja != request.form.get("function"): 
+                # deleting indicator varForPlot
+                for v in inputVar:
+                    inputVar[v].varForPlot = False
+                varForPlot = '' 
+            # reading name of new selected function
+            funkcja = request.form.get("function")
+            # for function with only 1 input variable
+            if funkcjeDict[funkcja].argsNr == 1: 
+                varForPlot = funkcjeDict[funkcja].args[0]
+                inputVar[funkcjeDict[funkcja].args[0]].varForPlot
+        # read value from form; number of variable depends on selected function (from 0 to 2)
+        for element in inputVar:    
+            if inputVar[element].abbrev in request.form and inputVar[element].abbrev != None:
+                inputVar[element].value = float(request.form.get(inputVar[element].abbrev))
+
+        if "zakres_min" in request.form and request.form["zakres_min"] != None:
+            zakresMin = float(request.form.get("zakres_min"))
+        if "zakres_max" in request.form and request.form["zakres_max"] != None:
+            zakresMax = float(request.form.get("zakres_max"))
+        if "varForPlot" in request.form and request.form["varForPlot"] != None:
+            varForPlot = request.form.get("varForPlot")
+            for v in inputVar:
+                    inputVar[v].varForPlot = False
+            inputVar[request.form.get("varForPlot")].varForPlot = True
+
+        if abs(zakresMax - zakresMin) > 0:
+            x = np.arange(zakresMin, zakresMax, 0.1)
+        else:
+            x = 0
+
+        plt.figure()
+        plt.subplot(1,1,1)
+        temp = funkcjeDict[funkcja].comment.split("Arg")
+        plt.title(f"{ temp[0]}")
+        temp = funkcjeDict[funkcja].comment.split("Returns:")
+        plt.xlabel(f"{varForPlot} []")
+        if varForPlot in inputVar:
+            plt.xlabel(f"{ varForPlot} [{inputVar[varForPlot].unit}]")
+        # print(f"{varForPlot}, {len(varForPlot), type(varForPlot)}")
+        # print(inputVar[varForPlot].abbrev)
+        temp = funkcja.split('_')[0] if funkcja.split('_')[0][-1].islower() else funkcja.split('_')[0][:-1]
+        if temp in outputVar:
+            plt.ylabel(f"{ temp} [{outputVar[temp].unit}]")
+        else: 
+            plt.ylabel(f"{ temp}")
+        # if funkcja == "tsat_p":
+        #     # y = uf_tsat_p(x)
+        #     plt.title("Temperatura pary nasyconej w funkcji ciśnienia")
+        #     plt.xlabel("bar abs.")
+        #     plt.ylabel("\N{DEGREE SIGN}C")
+        # elif funkcja == "hV_p":
+        #     # y = uf_hV_p(x)
+        #     plt.title("Entalpia pary nasyconej w funkcji ciśnienia (abs)")
+        #     plt.xlabel("bar abs.")
+        #     plt.ylabel("J")
+        # elif funkcja == "hV_t":
+        #     pass
+        #     # y = uf_hV_t(x)
+        # elif funkcja == "h_pt":
+        #     if varForPlot == "selectedPres":
+        #         # y = uf_h_pt(x,tempObliczen)
+        #         pass
+        #     elif varForPlot == "selectedTemp":
+        #         # y = uf_h_pt(cisnObliczen,x)
+        #         pass
+        #     else:
+        #         y = np.ones(len(x))
+        # elif funkcja == "rho_pt":
+        #     if varForPlot == "selectedPres":
+        #         # y = uf_rho_pt(x,tempObliczen)
+        #         pass
+        #     elif varForPlot == "selectedTemp":
+        #         # y = uf_rho_pt(cisnObliczen,x)
+        #         pass
+        #     else:
+        #         y = np.ones(len(x))
+        functionUfun = np.frompyfunc(getattr(steam_table, funkcja), funkcjeDict[funkcja].argsNr, 1)
+        if funkcjeDict[funkcja].argsNr == 1:
+            y = functionUfun(x)
+        elif funkcjeDict[funkcja].argsNr == 2:
+            if inputVar[funkcjeDict[funkcja].args[0]].varForPlot:
+                y = functionUfun(x, inputVar[funkcjeDict[funkcja].args[1]].value)
+            elif inputVar[funkcjeDict[funkcja].args[1]].varForPlot:
+                y = functionUfun( inputVar[funkcjeDict[funkcja].args[0]].value, x)
+            # else:
+            #     y = np.ones(len(x))
+        elif funkcjeDict[funkcja].argsNr == 0:
+            y = np.zeros(len(x))*functionUfun()
+        else:
+            y = x
+
+        if funkcjeDict[funkcja].argsNr in (1,2) and varForPlot in inputVar:
+            plt.plot(x,y)
+            html_fig = mpld3.fig_to_html(plt.gcf())
+        elif funkcjeDict[funkcja].argsNr == 0:
+            html_fig = f"<h2> Constant: {functionUfun()} </h2>"
+        else:
+            html_fig = f"<h2> Something went wrong :( </h2>"
+
+        
+        flash(f"<strong> Selected function - {funkcja}</strong><br> {funkcjeDict[funkcja].comment}")
+        form_filled_path = os.path.join("Templates", "form_filled.html")
+        
+        return render_template("form_filled.html", globalnyLicznik=globalnyLicznik, funkcja=funkcja, \
+                varForPlot=varForPlot, tempObliczen=tempObliczen, cisnObliczen=cisnObliczen,\
+                 zakresMin=zakresMin, zakresMax=zakresMax, formMethod=formMethod,\
+                funkcjeDict=funkcjeDict, inputVar=inputVar, html_fig=html_fig )
+    else:
+        flash(f"Metoda: {formMethod}; plik: from_empty.html; licznik: {globalnyLicznik} ")
+        return render_template("form_empty.html",globalnyLicznik=globalnyLicznik, \
+        tempObliczen=tempObliczen, formMethod=formMethod, cisnObliczen=cisnObliczen,\
+              zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar)
+    ## zbudować klasę która będzie zawierała informacje o funkcji z tab. parowej
+    # str: nazwa fukcji
+    # int: iloś arg
+    # dict: nazwy argumentów {"t":"temperature", "p":"pressure", "rho": "density", "h": "enthalpy", "s":"entrophy"}
+    # wygenerować listę zawierającą klasy opisujące funkcje term.
+
+@app.route('/tablice_parowe_sql', methods=['GET', 'POST'])
+def tablice_parowe_sql():
     global funkcjeDict, globalnyLicznik, funkcja, varForPlot, tempObliczen, cisnObliczen, zakresMin, zakresMax
     ## wybór funkcji - popup menue (POST)
     print(f"pracuje :) {globalnyLicznik}")
