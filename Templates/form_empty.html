@@ -2,7 +2,7 @@
 {% extends 'base.html'%}
 {% from "macros.html" import confirmSelected, selectFunction, calculationValues, selectFunctionV2 %}
   {% block epmty_forms_area %}
-    <!-- <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+    <!-- <form action="{{url_for(url_for_routeName, _external=True)}}", method="POST">
         <label for="function"> Wybierz funkcję: </label>
         {{ selectFunction(funkcjeDict, funkcja) }}
         <input type="submit" value="Zapisz"><br><br>
@@ -11,7 +11,7 @@
       Select thermodynamic function
     </div>
 
-    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+    <form action="{{url_for(url_for_routeName, _external=True)}}", method="POST">
       <legend>Values for plot: </legend>
       <fieldset>
           {{calculationValues(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax)}}
@@ -19,7 +19,7 @@
     </form><br>
 
     <!--
-    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+    <form action="{{url_for(url_for_routeName, _external=True)}}", method="POST">
         <label for="zadana_temp"> Podaj temperaturę do obiczeń </label>
         <input type="text", id="zadana_temp", name="zadana_temp", value="{{tempObliczen}}"><br>
         <label for="zadane_cisn"> Podaj ciśnienie (abs) do obiczeń </label>

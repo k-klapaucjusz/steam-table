@@ -18,20 +18,31 @@ import sqlite3
 
 # os.sys.path.append("C:\\Users\\apsta\\PycharmProjects\\pythonProject")
 # import rownania_rozniczkowe
-app_info = {'db_file' : os.path.join(os.getcwd(),"sql_data")}
+app_info = {'db_file' : os.path.join(os.getcwd(),*['sql_data', 'steam.db'])}
 
 app = Flask(__name__, template_folder="Templates")
 
 app.debug = True
 app.config['SECRET_KEY'] = '1111'
 # toolbar = DebugToolbarExtension(app)
-
-def get_db():
+tableColumns = ['id', 'function', 'arg1', 'arg2', 'value', 'date']
+def get_db(db_path):
     if not hasattr(g, "sqlite_db"):
-        conn = sqlite3.connect(app_info["db_file"])
+        conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
         g.sqlite_db = conn
     return g.sqlite_db
+def test_db(conn, tableColumns):
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(history)")
+    rows = cur.fetchall()
+    columnNames = [row["name"] for row in rows]
+    # cur.execute("SELECT * FROM test_table")
+    # rows = cur.fetchall()
+    for c in tableColumns:
+        if c not in columnNames:
+            return False
+    return True
 
 @app.teardown_appcontext
 def close_db(error):
@@ -465,6 +476,7 @@ funkcjeDict = xSteamIndex.index()
 
 @app.route('/tablice_parowe_jinja', methods=['GET', 'POST'])
 def tablice_parowe_jinja():
+    url_for_routeName = 'tablice_parowe_jinja'
     global funkcjeDict, globalnyLicznik, funkcja, varForPlot, tempObliczen, cisnObliczen, zakresMin, zakresMax
     ## wybór funkcji - popup menue (POST)
     print(f"pracuje :) {globalnyLicznik}")
@@ -488,7 +500,9 @@ def tablice_parowe_jinja():
         flash(f"Metoda: {formMethod}; plik: from_empty.html; licznik: {globalnyLicznik} ")
         # form_empty_path = os.path.join("\Templates", "form_empty.html")
         # print(form_empty_path)
-        return render_template("form_empty.html", globalnyLicznik=globalnyLicznik, funkcja = funkcja, tempObliczen=tempObliczen, formMethod=formMethod, cisnObliczen=cisnObliczen, zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar)
+        return render_template("form_empty.html", globalnyLicznik=globalnyLicznik, funkcja = funkcja, tempObliczen=tempObliczen, \
+                               formMethod=formMethod, cisnObliczen=cisnObliczen, zakresMin=zakresMin, zakresMax=zakresMax, \
+                                funkcjeDict=funkcjeDict, inputVar=inputVar, url_for_routeName=url_for_routeName)
     
     elif request.method == 'POST':
         flash(f"Metoda: {formMethod}; plik: from_filled.html; licznik: {globalnyLicznik} ")
@@ -600,12 +614,13 @@ def tablice_parowe_jinja():
         return render_template("form_filled.html", globalnyLicznik=globalnyLicznik, funkcja=funkcja, \
                 varForPlot=varForPlot, tempObliczen=tempObliczen, cisnObliczen=cisnObliczen,\
                  zakresMin=zakresMin, zakresMax=zakresMax, formMethod=formMethod,\
-                funkcjeDict=funkcjeDict, inputVar=inputVar, html_fig=html_fig )
+                funkcjeDict=funkcjeDict, inputVar=inputVar, html_fig=html_fig, url_for_routeName=url_for_routeName )
     else:
         flash(f"Metoda: {formMethod}; plik: from_empty.html; licznik: {globalnyLicznik} ")
         return render_template("form_empty.html",globalnyLicznik=globalnyLicznik, \
         tempObliczen=tempObliczen, formMethod=formMethod, cisnObliczen=cisnObliczen,\
-              zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar)
+              zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar,\
+                url_for_routeName=url_for_routeName)
     ## zbudować klasę która będzie zawierała informacje o funkcji z tab. parowej
     # str: nazwa fukcji
     # int: iloś arg
@@ -614,6 +629,7 @@ def tablice_parowe_jinja():
 
 @app.route('/tablice_parowe_sql', methods=['GET', 'POST'])
 def tablice_parowe_sql():
+    url_for_routeName = 'tablice_parowe_sql'
     global funkcjeDict, globalnyLicznik, funkcja, varForPlot, tempObliczen, cisnObliczen, zakresMin, zakresMax
     ## wybór funkcji - popup menue (POST)
     print(f"pracuje :) {globalnyLicznik}")
@@ -637,7 +653,9 @@ def tablice_parowe_sql():
         flash(f"Metoda: {formMethod}; plik: from_empty.html; licznik: {globalnyLicznik} ")
         # form_empty_path = os.path.join("\Templates", "form_empty.html")
         # print(form_empty_path)
-        return render_template("form_empty.html", globalnyLicznik=globalnyLicznik, funkcja = funkcja, tempObliczen=tempObliczen, formMethod=formMethod, cisnObliczen=cisnObliczen, zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar)
+        return render_template("form_empty.html", globalnyLicznik=globalnyLicznik, funkcja = funkcja, tempObliczen=tempObliczen,\
+                                formMethod=formMethod, cisnObliczen=cisnObliczen, zakresMin=zakresMin, zakresMax=zakresMax, \
+                                    funkcjeDict=funkcjeDict, inputVar=inputVar, url_for_routeName = url_for_routeName)
     
     elif request.method == 'POST':
         flash(f"Metoda: {formMethod}; plik: from_filled.html; licznik: {globalnyLicznik} ")
@@ -668,6 +686,9 @@ def tablice_parowe_sql():
                     inputVar[v].varForPlot = False
             inputVar[request.form.get("varForPlot")].varForPlot = True
 
+
+        ################
+        #  plot generating 
         if abs(zakresMax - zakresMin) > 0:
             x = np.arange(zakresMin, zakresMax, 0.1)
         else:
@@ -688,37 +709,7 @@ def tablice_parowe_sql():
             plt.ylabel(f"{ temp} [{outputVar[temp].unit}]")
         else: 
             plt.ylabel(f"{ temp}")
-        # if funkcja == "tsat_p":
-        #     # y = uf_tsat_p(x)
-        #     plt.title("Temperatura pary nasyconej w funkcji ciśnienia")
-        #     plt.xlabel("bar abs.")
-        #     plt.ylabel("\N{DEGREE SIGN}C")
-        # elif funkcja == "hV_p":
-        #     # y = uf_hV_p(x)
-        #     plt.title("Entalpia pary nasyconej w funkcji ciśnienia (abs)")
-        #     plt.xlabel("bar abs.")
-        #     plt.ylabel("J")
-        # elif funkcja == "hV_t":
-        #     pass
-        #     # y = uf_hV_t(x)
-        # elif funkcja == "h_pt":
-        #     if varForPlot == "selectedPres":
-        #         # y = uf_h_pt(x,tempObliczen)
-        #         pass
-        #     elif varForPlot == "selectedTemp":
-        #         # y = uf_h_pt(cisnObliczen,x)
-        #         pass
-        #     else:
-        #         y = np.ones(len(x))
-        # elif funkcja == "rho_pt":
-        #     if varForPlot == "selectedPres":
-        #         # y = uf_rho_pt(x,tempObliczen)
-        #         pass
-        #     elif varForPlot == "selectedTemp":
-        #         # y = uf_rho_pt(cisnObliczen,x)
-        #         pass
-        #     else:
-        #         y = np.ones(len(x))
+        
         functionUfun = np.frompyfunc(getattr(steam_table, funkcja), funkcjeDict[funkcja].argsNr, 1)
         if funkcjeDict[funkcja].argsNr == 1:
             y = functionUfun(x)
@@ -727,12 +718,36 @@ def tablice_parowe_sql():
                 y = functionUfun(x, inputVar[funkcjeDict[funkcja].args[1]].value)
             elif inputVar[funkcjeDict[funkcja].args[1]].varForPlot:
                 y = functionUfun( inputVar[funkcjeDict[funkcja].args[0]].value, x)
+            else:
+                y = 0
             # else:
             #     y = np.ones(len(x))
         elif funkcjeDict[funkcja].argsNr == 0:
             y = np.zeros(len(x))*functionUfun()
         else:
             y = x
+        
+        ################
+        # database - sqlite3
+        print(f"ARGUMENTY: {funkcjeDict[funkcja].argsNr}; ŚCIEŻKA: {app_info['db_file']}")
+        db = get_db(app_info["db_file"])
+        if not test_db(db, tableColumns):
+            flash(f"<strong> Błąd połączenia z bazą danych</strong>")
+        sql_command = "insert into history(function, arg1, arg2, value) values(?, ?, ?, ?);"
+        if inputVar[funkcjeDict[funkcja].args[0]].varForPlot:
+            sqlArg1Value = int(zakresMax)
+        else:
+            sqlArg1Value = int(inputVar[funkcjeDict[funkcja].args[0]].value)
+        if funkcjeDict[funkcja].argsNr==2:
+            if inputVar[funkcjeDict[funkcja].args[1]].varForPlot:
+                sqlArg2Value = int(zakresMax)
+            else:
+                sqlArg2Value = int(inputVar[funkcjeDict[funkcja].args[1]].value)
+        else:
+            sqlArg2Value = 0 
+        if funkcjeDict[funkcja].argsNr in (1,2) and varForPlot in inputVar: 
+            db.execute(sql_command, [funkcja, sqlArg1Value, sqlArg2Value, (y[-1])] )
+            db.commit()
 
         if funkcjeDict[funkcja].argsNr in (1,2) and varForPlot in inputVar:
             plt.plot(x,y)
@@ -749,12 +764,12 @@ def tablice_parowe_sql():
         return render_template("form_filled.html", globalnyLicznik=globalnyLicznik, funkcja=funkcja, \
                 varForPlot=varForPlot, tempObliczen=tempObliczen, cisnObliczen=cisnObliczen,\
                  zakresMin=zakresMin, zakresMax=zakresMax, formMethod=formMethod,\
-                funkcjeDict=funkcjeDict, inputVar=inputVar, html_fig=html_fig )
+                funkcjeDict=funkcjeDict, inputVar=inputVar, html_fig=html_fig, url_for_routeName=url_for_routeName )
     else:
         flash(f"Metoda: {formMethod}; plik: from_empty.html; licznik: {globalnyLicznik} ")
         return render_template("form_empty.html",globalnyLicznik=globalnyLicznik, \
         tempObliczen=tempObliczen, formMethod=formMethod, cisnObliczen=cisnObliczen,\
-              zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar)
+              zakresMin=zakresMin, zakresMax=zakresMax, funkcjeDict=funkcjeDict, inputVar=inputVar, url_for_routeName=url_for_routeName)
     ## zbudować klasę która będzie zawierała informacje o funkcji z tab. parowej
     # str: nazwa fukcji
     # int: iloś arg

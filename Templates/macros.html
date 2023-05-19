@@ -17,8 +17,8 @@
     </select><br>
 {% endmacro %}
 
-{% macro selectFunctionV2(funkcjeDict, funkcja) %}
-    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+{% macro selectFunctionV2(funkcjeDict, funkcja, url_for_routeName) %}
+    <form action="{{url_for(url_for_routeName, _external=True)}}", method="POST">
         <div class="row" >  
             <div class="col-md-12" >
                 <button type="submit" class="btn btn-primary btn-block sticky-top" >Select function</button>
@@ -46,9 +46,9 @@
 
 {% endmacro %}
 
-{% macro selectVarForPlot(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax) %}
+{% macro selectVarForPlot(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax, url_for_routeName) %}
     {% if funkcjeDict[funkcja].argsNr == 2 %}
-    <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+    <form action="{{url_for(url_for_routeName, _external=True)}}", method="POST">
         {% for arg in funkcjeDict[funkcja].args %}
             {% if inputVar[arg].varForPlot %}
                 <div class="form-check">

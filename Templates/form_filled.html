@@ -3,7 +3,7 @@
 {% from "macros.html" import confirmSelected, selectFunction, calculationValues, selectVarForPlot %}
 
     {% block filled_forms_area %}
-    <!-- <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+    <!-- <form action="{{url_for(url_for_routeName, _external=True)}}", method="POST">
         <label for="function"> Wybierz funkcję: </label>
             {{ selectFunction(funkcjeDict, funkcja) }}
         <input type="submit" value="Zapisz"><br><br>
@@ -11,9 +11,9 @@
     
     <legend> Values for plot: </legend>
     <fieldset>
-        {{ selectVarForPlot(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax) }}
+        {{ selectVarForPlot(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax, url_for_routeName) }}
 
-        <form action="{{url_for('tablice_parowe_jinja', _external=True)}}", method="POST">
+        <form action="{{url_for(url_for_routeName, _external=True)}}", method="POST">
             
                 {{calculationValues(funkcja, funkcjeDict, inputVar, varForPlot, zakresMin, zakresMax)}}
             
