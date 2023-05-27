@@ -1,0 +1,38 @@
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">id</th>
+            <th scope="col">function</th>
+            <th scope="col">arg 1</th>
+            <th scope="col">arg 2</th>
+            <th scope="col">value</th>
+            <th scope="col">date</th>
+            <th scope="col">===</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dbRecord in dbRecords %}
+          <tr>
+          <th scope="row">{{ dbRecord.id }}</th>
+          <td>{{ dbRecord.function }}</td>
+          <td>{{ dbRecord.arg1 }}</td>
+          <td>{{ dbRecord.arg2 }}</td>
+          <td>{{ dbRecord.value }}</td>
+          <td>{{ dbRecord.date }}</td>
+          <td>
+          <a href="#" class="btn btn-primary btn-sm" role="button">Actions...</a>
+          <a href="#" class="btn btn-success btn-sm" role="button">Edit...</a>
+          <a href="#" class="btn btn-danger btn-sm" role="button">Delete...</a>
+          </td>
+          </tr>
+          {%endfor%}
+        </tbody>
+      </table>
+</div>
+{% endblock %}
