@@ -22,7 +22,7 @@
   <nav id="navbar" class="navbar navbar-expand-sm bg-dark navbar-dark ">
     <ul class="navbar-nav">
       <li class="nav-item ">
-        <a class="nav-link " href="{{url_for(routeName)}}">Main</a>
+        <a class="nav-link " href="{{url_for('steam_table_sql')}}">Main</a>
       </li>
       <li class="nav-item">
         <a class="nav-link " href="{{url_for('steam_table_sql_history')}}">History</a>
@@ -54,10 +54,15 @@
 
         <!-- zmodyfikować if o sprawdzenie routeName
               i do wyświetlenia historii wybrać blok w history.html-->
-        {% if formMethod == 'GET' %}
-        {% block epmty_forms_area %} {% endblock %}
-        {% elif formMethod == 'POST' %}
-        {% block filled_forms_area %} {% endblock %}
+        {% if routeName == 'steam_table_sql_history'%}
+          {% block history%}
+          {% endblock %}
+        {% endif %}
+
+        {% if routeName == 'steam_table_sql' and formMethod == 'GET' %}
+          {% block epmty_forms_area %} {% endblock %}
+        {% elif routeName == 'steam_table_sql' and formMethod == 'POST' %}
+          {% block filled_forms_area %} {% endblock %}
         {% endif %}
       </div>
     </div>

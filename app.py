@@ -2,7 +2,7 @@
 # import re
 from flask import Flask, request, url_for, redirect, render_template, flash, g
 from flask_debugtoolbar import DebugToolbarExtension
-from datetime import datetime
+from datetime import datetime, date
 # from sympy import Symbol,symbols, Function,diff, Eq, dsolve, solve, lambdify
 import numpy as np
 import matplotlib.pyplot as plt
@@ -553,37 +553,6 @@ def tablice_parowe_jinja():
             plt.ylabel(f"{ temp} [{outputVar[temp].unit}]")
         else: 
             plt.ylabel(f"{ temp}")
-        # if funkcja == "tsat_p":
-        #     # y = uf_tsat_p(x)
-        #     plt.title("Temperatura pary nasyconej w funkcji ciśnienia")
-        #     plt.xlabel("bar abs.")
-        #     plt.ylabel("\N{DEGREE SIGN}C")
-        # elif funkcja == "hV_p":
-        #     # y = uf_hV_p(x)
-        #     plt.title("Entalpia pary nasyconej w funkcji ciśnienia (abs)")
-        #     plt.xlabel("bar abs.")
-        #     plt.ylabel("J")
-        # elif funkcja == "hV_t":
-        #     pass
-        #     # y = uf_hV_t(x)
-        # elif funkcja == "h_pt":
-        #     if varForPlot == "selectedPres":
-        #         # y = uf_h_pt(x,tempObliczen)
-        #         pass
-        #     elif varForPlot == "selectedTemp":
-        #         # y = uf_h_pt(cisnObliczen,x)
-        #         pass
-        #     else:
-        #         y = np.ones(len(x))
-        # elif funkcja == "rho_pt":
-        #     if varForPlot == "selectedPres":
-        #         # y = uf_rho_pt(x,tempObliczen)
-        #         pass
-        #     elif varForPlot == "selectedTemp":
-        #         # y = uf_rho_pt(cisnObliczen,x)
-        #         pass
-        #     else:
-        #         y = np.ones(len(x))
         functionUfun = np.frompyfunc(getattr(steam_table, funkcja), funkcjeDict[funkcja].argsNr, 1)
         if funkcjeDict[funkcja].argsNr == 1:
             y = functionUfun(x)
@@ -628,9 +597,9 @@ def tablice_parowe_jinja():
     # wygenerować listę zawierającą klasy opisujące funkcje term.
 
 
-@app.route('/tablice_parowe_sql', methods=['GET', 'POST'])
-def tablice_parowe_sql():
-    routeName = 'tablice_parowe_sql'
+@app.route('/steam_table_sql', methods=['GET', 'POST'])
+def steam_table_sql():
+    routeName = 'steam_table_sql'
     global funkcjeDict, globalnyLicznik, funkcja, varForPlot, tempObliczen, cisnObliczen, zakresMin, zakresMax
     ## wybór funkcji - popup menue (POST)
     print(f"pracuje :) {globalnyLicznik}")
@@ -788,12 +757,24 @@ def tablice_parowe_sql():
 @app.route('/steam_table_sql_history', methods=['GET','POST'])
 def steam_table_sql_history():
     routeName = 'steam_table_sql_history'
-    db = get_db()
-    # !!! dodać if do testu czy komunikacja z baza danych funguje  :)
-    sql_command = 'select id, function, arg1, arg2, value, date from history;'
-    cur = db.execute(sql_command)
-    dbRecords = cur.fetchall()
-    return render_template('steam_table_sql_history',routeName=routeName, dbRecords=dbRecords)
+    dbRecords = []
+    db = get_db(app_info["db_file"])
+    if test_db(db, tableColumns):
+        sql_command = 'select id, function, arg1, arg2, value, date from history;'
+        cur = db.execute(sql_command)
+        dbRecords = cur.fetchall()
+    return render_template('history.html',routeName=routeName, dbRecords=dbRecords)
+
+@app.route('/steam_table_sql_delete/<int:record_id>')
+def steam_table_sql_delete(record_id):
+
+    db = get_db(app_info["db_file"])
+    if test_db(db, tableColumns):
+        sql_command = 'delete from history where id = ?;'
+        db.execute(sql_command, [record_id])
+        db.commit()
+    return redirect(url_for('steam_table_sql_history'))
+
 
 
 

@@ -2,7 +2,7 @@
 
 {% extends "base.html" %}
 
-{% block content %}
+{% block history %}
 <div class="container">
     <table class="table">
         <thead>
@@ -28,7 +28,7 @@
           <td>
           <a href="#" class="btn btn-primary btn-sm" role="button">Actions...</a>
           <a href="#" class="btn btn-success btn-sm" role="button">Edit...</a>
-          <a href="#" class="btn btn-danger btn-sm" role="button">Delete...</a>
+          <a href="{{url_for('steam_table_sql_delete',record_id=dbRecord.id)}}" class="btn btn-danger btn-sm" role="button">Delete...</a>
           </td>
           </tr>
           {%endfor%}
